@@ -12,7 +12,14 @@ import {
 } from "lucide-react";
 import type { ReactNode } from "react";
 
-const navItems = [
+type NavItem = {
+  to: string;
+  label: string;
+  icon: typeof LayoutDashboard;
+  exact?: boolean;
+};
+
+const navItems: NavItem[] = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { to: "/recipes", label: "Recipes", icon: CookingPot },
   { to: "/orders", label: "Orders", icon: ClipboardList },
@@ -20,7 +27,7 @@ const navItems = [
   { to: "/inventory", label: "Inventory", icon: Wheat },
   { to: "/customers", label: "Customers", icon: Users },
   { to: "/settings", label: "Settings", icon: Settings },
-] as const;
+];
 
 export function WorkspaceLayout() {
   return (
