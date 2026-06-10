@@ -46,7 +46,7 @@ export function WorkspaceLayout() {
           {navItems.map(({ to, label, icon: Icon, exact }) => (
             <Link
               key={to}
-              to={to}
+              to={to as string}
               activeOptions={{ exact: !!exact }}
               activeProps={{
                 className:
