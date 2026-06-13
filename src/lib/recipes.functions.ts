@@ -15,23 +15,26 @@ export type RecipeDetail = RecipeCard & {
   directions: string | null;
 };
 
-export const listBooks = createServerFn({ method: "GET" }).handler(async () => {
-  const { getRecipesClient } = await import("./recipes.server");
-  const supabase = getRecipesClient();
-  const { data, error } = await supabase
-    .from("recipes")
-    .select("book")
-    .not("book", "is", null);
-  if (error) throw new Error(error.message);
-  const unique = Array.from(
-    new Set(
-      (data ?? [])
-        .map((r) => (r as { book: string | null }).book)
-        .filter((b): b is string => !!b && b.trim().length > 0),
-    ),
-  ).sort((a, b) => a.localeCompare(b));
-  return unique;
-});
+export const listBooks = createServerFn({ method: "GET" }).handler(
+  async (): Promise<string[]> => {
+    const { getRecipesClient } = await import("./recipes.server");
+    const supabase = getRecipesClient();
+    const { data, error } = await supabase
+      .from("recipes")
+      .select("book")
+      .not("book", "is", null);
+    if (error) throw new Error(error.message);
+    const rows = (data ?? []) as Array<{ book: string | null }>;
+    const unique = Array.from(
+      new Set(
+        rows
+          .map((r) => r.book)
+          .filter((b): b is string => !!b && b.trim().length > 0),
+      ),
+    ).sort((a, b) => a.localeCompare(b));
+    return unique;
+  },
+);
 
 export const listRecipes = createServerFn({ method: "POST" })
   .inputValidator(
