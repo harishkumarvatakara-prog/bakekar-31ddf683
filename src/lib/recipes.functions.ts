@@ -15,15 +15,36 @@ export type RecipeDetail = RecipeCard & {
   directions: string | null;
 };
 
+export type BooksResult = {
+  books: string[];
+  error: string | null;
+};
+
+function formatSupabaseError(error: {
+  message?: string;
+  hint?: string | null;
+  code?: string | null;
+  details?: string | null;
+}, status?: number, statusText?: string) {
+  const statusLabel = status ? `HTTP ${status}${statusText ? ` ${statusText}` : ""}` : null;
+  const parts = [statusLabel, error.message, error.hint, error.details, error.code]
+    .filter((part): part is string => Boolean(part));
+  return parts.join(" — ");
+}
+
 export const listBooks = createServerFn({ method: "GET" }).handler(
-  async (): Promise<string[]> => {
+  async (): Promise<BooksResult> => {
     const { getRecipesClient } = await import("./recipes.server");
     const supabase = getRecipesClient();
-    const { data, error } = await supabase
+    const { data, error, status, statusText } = await supabase
       .from("recipes")
       .select("book")
       .not("book", "is", null);
-    if (error) throw new Error(error.message);
+    if (error) {
+      const message = formatSupabaseError(error, status, statusText);
+      console.error("recipes.listBooks Supabase error", message);
+      return { books: [], error: message };
+    }
     const rows = (data ?? []) as Array<{ book: string | null }>;
     const unique = Array.from(
       new Set(
@@ -32,7 +53,7 @@ export const listBooks = createServerFn({ method: "GET" }).handler(
           .filter((b): b is string => !!b && b.trim().length > 0),
       ),
     ).sort((a, b) => a.localeCompare(b));
-    return unique;
+    return { books: unique, error: null };
   },
 );
 
@@ -66,13 +87,24 @@ export const listRecipes = createServerFn({ method: "POST" })
     }
     q = q.range(data.offset, data.offset + data.limit - 1);
 
-    const { data: rows, error, count } = await q;
-    if (error) throw new Error(error.message);
+    const { data: rows, error, count, status, statusText } = await q;
+    if (error) {
+      const message = formatSupabaseError(error, status, statusText);
+      console.error("recipes.listRecipes Supabase error", message);
+      return {
+        recipes: [] as RecipeCard[],
+        total: 0,
+        offset: data.offset,
+        limit: data.limit,
+        error: message,
+      };
+    }
     return {
       recipes: (rows ?? []) as RecipeCard[],
       total: count ?? 0,
       offset: data.offset,
       limit: data.limit,
+      error: null,
     };
   });
 
