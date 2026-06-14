@@ -100,7 +100,7 @@ function RecipesPage() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value={ALL_BOOKS}>All books</SelectItem>
-            {(booksQuery.data ?? []).map((b) => (
+            {(booksQuery.data?.books ?? []).map((b) => (
               <SelectItem key={b} value={b}>
                 {b}
               </SelectItem>
@@ -110,9 +110,9 @@ function RecipesPage() {
         {booksQuery.isLoading && (
           <span className="text-xs text-muted-foreground">Loading books…</span>
         )}
-        {booksQuery.error && (
+        {(booksQuery.error || booksQuery.data?.error) && (
           <span className="text-xs text-destructive">
-            {(booksQuery.error as Error).message}
+            {booksQuery.data?.error ?? (booksQuery.error as Error).message}
           </span>
         )}
       </div>
@@ -160,9 +160,9 @@ function RecipesPage() {
             ? "Loading recipes…"
             : `${recipes.length} of ${total} ${total === 1 ? "recipe" : "recipes"}`}
         </div>
-        {recipesQuery.error ? (
+        {recipesQuery.error || recipesQuery.data?.error ? (
           <span className="text-destructive">
-            {(recipesQuery.error as Error).message}
+            {recipesQuery.data?.error ?? (recipesQuery.error as Error).message}
           </span>
         ) : null}
       </div>
