@@ -39,11 +39,30 @@ function RecipesPage() {
   const listBooksFn = useServerFn(listBooks);
   const listRecipesFn = useServerFn(listRecipes);
   const getRecipeFn = useServerFn(getRecipe);
+  const searchRecipesFn = useServerFn(searchRecipes);
 
   const [book, setBook] = useState<string>(ALL_BOOKS);
   const [letter, setLetter] = useState<string | null>(null);
   const [pages, setPages] = useState(1);
   const [openId, setOpenId] = useState<number | null>(null);
+  const [searchText, setSearchText] = useState("");
+
+  const searchMutation = useMutation({
+    mutationFn: (q: string) =>
+      searchRecipesFn({
+        data: {
+          query: q,
+          book: book === ALL_BOOKS ? null : book,
+          limit: 5,
+        },
+      }),
+  });
+
+  const runSearch = () => {
+    const q = searchText.trim();
+    if (!q) return;
+    searchMutation.mutate(q);
+  };
 
   const booksQuery = useQuery({
     queryKey: ["recipes", "books"],
