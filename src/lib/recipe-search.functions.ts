@@ -59,7 +59,7 @@ export const searchRecipes = createServerFn({ method: "POST" })
         fn: string,
         args: Record<string, unknown>,
       ) => Promise<{ data: unknown; error: { message?: string; hint?: string | null } | null }>)(
-        "match_recipes",
+        "search_recipes",
         { query_embedding: embedding, match_count: fetchCount },
       );
 
