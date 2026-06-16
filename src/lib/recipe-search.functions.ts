@@ -19,7 +19,7 @@ async function embedQuery(text: string): Promise<number[]> {
     },
     body: JSON.stringify({
       input: [text],
-      model: "voyage-3",
+      model: "voyage-law-2",
       input_type: "query",
     }),
   });
