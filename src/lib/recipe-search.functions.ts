@@ -34,7 +34,8 @@ async function embedQuery(text: string): Promise<number[]> {
   if (!vec || !Array.isArray(vec)) {
     throw new Error("Voyage AI returned no embedding");
   }
-  return vec;
+  // Slice to 384 dims to match the DB vector column
+  return vec.slice(0, 384);
 }
 
 export const searchRecipes = createServerFn({ method: "POST" })
