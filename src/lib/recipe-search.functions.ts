@@ -29,7 +29,9 @@ async function embedQuery(text: string, hfKey: string): Promise<number[]> {
   }
   const json = (await res.json()) as number[] | number[][];
   // all-MiniLM-L6-v2 returns a flat 384-dim array (mean-pooled & normalized).
-  const vec = Array.isArray(json[0]) ? (json[0] as number[]) : (json as number[]);
+  const vec = Array.isArray(json[0])
+    ? (json[0] as number[])
+    : (json as number[]);
   if (!Array.isArray(vec) || vec.length !== 384) {
     throw new Error(
       `Expected 384-dim embedding, got ${Array.isArray(vec) ? vec.length : typeof vec}`,
@@ -38,15 +40,12 @@ async function embedQuery(text: string, hfKey: string): Promise<number[]> {
   return vec;
 }
 
-
 export const searchRecipes = createServerFn({ method: "POST" })
-  .inputValidator(
-    (input: { query: string; book?: string | null; limit?: number }) => ({
-      query: String(input.query ?? "").trim(),
-      book: input.book ?? null,
-      limit: Math.min(20, Math.max(1, Number(input.limit ?? 5))),
-    }),
-  )
+  .inputValidator((input: { query: string; book?: string | null; limit?: number }) => ({
+    query: String(input.query ?? "").trim(),
+    book: input.book ?? null,
+    limit: Math.min(20, Math.max(1, Number(input.limit ?? 5))),
+  }))
   .handler(async ({ data }): Promise<SearchResponse> => {
     if (!data.query) return { results: [], error: null };
 
@@ -63,15 +62,13 @@ export const searchRecipes = createServerFn({ method: "POST" })
       const { data: rows, error } = await (supabase.rpc as unknown as (
         fn: string,
         args: Record<string, unknown>,
-      ) => Promise<{ data: unknown; error: { message?: string; hint?: string | null } | null }>)(
-        "search_recipes",
-        { query_embedding: embedding, match_count: fetchCount },
-      );
+      ) => Promise<{
+        data: unknown;
+        error: { message?: string; hint?: string | null } | null;
+      }>)("search_recipes", { query_embedding: embedding, match_count: fetchCount });
 
       if (error) {
-        const msg = `${error.message ?? "RPC error"}${
-          error.hint ? ` — ${error.hint}` : ""
-        }`;
+        const msg = `${error.message ?? "RPC error"}${error.hint ? ` — ${error.hint}` : ""}`;
         return { results: [], error: msg };
       }
 
@@ -85,9 +82,7 @@ export const searchRecipes = createServerFn({ method: "POST" })
         similarity: number;
       }>;
 
-      const filtered = data.book
-        ? all.filter((r) => r.book === data.book)
-        : all;
+      const filtered = data.book ? all.filter((r) => r.book === data.book) : all;
 
       return {
         results: filtered.slice(0, data.limit),
