@@ -29,9 +29,7 @@ async function embedQuery(text: string, hfKey: string): Promise<number[]> {
   }
   const json = (await res.json()) as number[] | number[][];
   // all-MiniLM-L6-v2 returns a flat 384-dim array (mean-pooled & normalized).
-  const vec = Array.isArray(json[0])
-    ? (json[0] as number[])
-    : (json as number[]);
+  const vec = Array.isArray(json[0]) ? (json[0] as number[]) : (json as number[]);
   if (!Array.isArray(vec) || vec.length !== 384) {
     throw new Error(
       `Expected 384-dim embedding, got ${Array.isArray(vec) ? vec.length : typeof vec}`,
@@ -65,7 +63,10 @@ export const searchRecipes = createServerFn({ method: "POST" })
       ) => Promise<{
         data: unknown;
         error: { message?: string; hint?: string | null } | null;
-      }>)("search_recipes", { query_embedding: embedding, match_count: fetchCount });
+      }>)("search_recipes", {
+        query_embedding: embedding,
+        match_count: fetchCount,
+      });
 
       if (error) {
         const msg = `${error.message ?? "RPC error"}${error.hint ? ` — ${error.hint}` : ""}`;
