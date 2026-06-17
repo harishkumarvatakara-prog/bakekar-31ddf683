@@ -9,34 +9,37 @@ export type SearchResponse = {
 };
 
 async function embedQuery(text: string): Promise<number[]> {
-  const key = process.env.EXTERNAL_VOYAGE_API_KEY?.trim();
-  if (!key) throw new Error("Missing EXTERNAL_VOYAGE_API_KEY");
-  const res = await fetch("https://api.voyageai.com/v1/embeddings", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${key}`,
+  const key = process.env.HUGGINGFACE_API_KEY?.trim();
+  if (!key) throw new Error("Missing HUGGINGFACE_API_KEY");
+  const res = await fetch(
+    "https://router.huggingface.co/hf-inference/models/sentence-transformers/all-MiniLM-L6-v2/pipeline/feature-extraction",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${key}`,
+      },
+      body: JSON.stringify({
+        inputs: text,
+        options: { wait_for_model: true },
+      }),
     },
-    body: JSON.stringify({
-      input: [text],
-      model: "voyage-law-2",
-      input_type: "query",
-    }),
-  });
+  );
   if (!res.ok) {
     const body = await res.text();
-    throw new Error(`Voyage AI HTTP ${res.status}: ${body.slice(0, 300)}`);
+    throw new Error(`HF inference HTTP ${res.status}: ${body.slice(0, 300)}`);
   }
-  const json = (await res.json()) as {
-    data?: Array<{ embedding: number[] }>;
-  };
-  const vec = json.data?.[0]?.embedding;
-  if (!vec || !Array.isArray(vec)) {
-    throw new Error("Voyage AI returned no embedding");
+  const json = (await res.json()) as number[] | number[][];
+  // all-MiniLM-L6-v2 returns a flat 384-dim array (mean-pooled & normalized).
+  const vec = Array.isArray(json[0]) ? (json[0] as number[]) : (json as number[]);
+  if (!Array.isArray(vec) || vec.length !== 384) {
+    throw new Error(
+      `Expected 384-dim embedding, got ${Array.isArray(vec) ? vec.length : typeof vec}`,
+    );
   }
-  // Slice to 384 dims to match the DB vector column
-  return vec.slice(0, 384);
+  return vec;
 }
+
 
 export const searchRecipes = createServerFn({ method: "POST" })
   .inputValidator(
