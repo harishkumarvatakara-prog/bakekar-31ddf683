@@ -8,16 +8,14 @@ export type SearchResponse = {
   error: string | null;
 };
 
-async function embedQuery(text: string): Promise<number[]> {
-  const key = process.env.HUGGINGFACE_API_KEY?.trim();
-  if (!key) throw new Error("Missing HUGGINGFACE_API_KEY");
+async function embedQuery(text: string, hfKey: string): Promise<number[]> {
   const res = await fetch(
     "https://router.huggingface.co/hf-inference/models/sentence-transformers/all-MiniLM-L6-v2/pipeline/feature-extraction",
     {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${key}`,
+        Authorization: `Bearer ${hfKey}`,
       },
       body: JSON.stringify({
         inputs: text,
@@ -53,7 +51,10 @@ export const searchRecipes = createServerFn({ method: "POST" })
     if (!data.query) return { results: [], error: null };
 
     try {
-      const embedding = await embedQuery(data.query);
+      const hfKey = process.env.HUGGINGFACE_API_KEY?.trim();
+      if (!hfKey) throw new Error("Missing HUGGINGFACE_API_KEY");
+
+      const embedding = await embedQuery(data.query, hfKey);
       const { getRecipesClient } = await import("./recipes.server");
       const supabase = getRecipesClient();
 
