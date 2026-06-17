@@ -57,13 +57,15 @@ export const searchRecipes = createServerFn({ method: "POST" })
 
       // Over-fetch so we can post-filter by book without re-querying.
       const fetchCount = data.book ? 40 : data.limit;
-      const { data: rows, error } = await (supabase.rpc as unknown as (
-        fn: string,
-        args: Record<string, unknown>,
-      ) => Promise<{
-        data: unknown;
-        error: { message?: string; hint?: string | null } | null;
-      }>)("search_recipes", {
+      const { data: rows, error } = await (
+        supabase.rpc as unknown as (
+          fn: string,
+          args: Record<string, unknown>,
+        ) => Promise<{
+          data: unknown;
+          error: { message?: string; hint?: string | null } | null;
+        }>
+      )("search_recipes", {
         query_embedding: embedding,
         match_count: fetchCount,
       });
