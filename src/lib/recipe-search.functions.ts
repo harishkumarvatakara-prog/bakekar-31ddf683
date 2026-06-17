@@ -8,16 +8,14 @@ export type SearchResponse = {
   error: string | null;
 };
 
-async function embedQuery(text: string): Promise<number[]> {
-  const key = process.env.HUGGINGFACE_API_KEY?.trim();
-  if (!key) throw new Error("Missing HUGGINGFACE_API_KEY");
+async function embedQuery(text: string, hfKey: string): Promise<number[]> {
   const res = await fetch(
     "https://router.huggingface.co/hf-inference/models/sentence-transformers/all-MiniLM-L6-v2/pipeline/feature-extraction",
     {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${key}`,
+        Authorization: `Bearer ${hfKey}`,
       },
       body: JSON.stringify({
         inputs: text,
@@ -40,37 +38,40 @@ async function embedQuery(text: string): Promise<number[]> {
   return vec;
 }
 
-
 export const searchRecipes = createServerFn({ method: "POST" })
-  .inputValidator(
-    (input: { query: string; book?: string | null; limit?: number }) => ({
-      query: String(input.query ?? "").trim(),
-      book: input.book ?? null,
-      limit: Math.min(20, Math.max(1, Number(input.limit ?? 5))),
-    }),
-  )
+  .inputValidator((input: { query: string; book?: string | null; limit?: number }) => ({
+    query: String(input.query ?? "").trim(),
+    book: input.book ?? null,
+    limit: Math.min(20, Math.max(1, Number(input.limit ?? 5))),
+  }))
   .handler(async ({ data }): Promise<SearchResponse> => {
     if (!data.query) return { results: [], error: null };
 
     try {
-      const embedding = await embedQuery(data.query);
+      const hfKey = process.env.HUGGINGFACE_API_KEY?.trim();
+      if (!hfKey) throw new Error("Missing HUGGINGFACE_API_KEY");
+
+      const embedding = await embedQuery(data.query, hfKey);
       const { getRecipesClient } = await import("./recipes.server");
       const supabase = getRecipesClient();
 
       // Over-fetch so we can post-filter by book without re-querying.
       const fetchCount = data.book ? 40 : data.limit;
-      const { data: rows, error } = await (supabase.rpc as unknown as (
-        fn: string,
-        args: Record<string, unknown>,
-      ) => Promise<{ data: unknown; error: { message?: string; hint?: string | null } | null }>)(
-        "search_recipes",
-        { query_embedding: embedding, match_count: fetchCount },
-      );
+      const { data: rows, error } = await (
+        supabase.rpc as unknown as (
+          fn: string,
+          args: Record<string, unknown>,
+        ) => Promise<{
+          data: unknown;
+          error: { message?: string; hint?: string | null } | null;
+        }>
+      )("search_recipes", {
+        query_embedding: embedding,
+        match_count: fetchCount,
+      });
 
       if (error) {
-        const msg = `${error.message ?? "RPC error"}${
-          error.hint ? ` — ${error.hint}` : ""
-        }`;
+        const msg = `${error.message ?? "RPC error"}${error.hint ? ` — ${error.hint}` : ""}`;
         return { results: [], error: msg };
       }
 
@@ -84,9 +85,7 @@ export const searchRecipes = createServerFn({ method: "POST" })
         similarity: number;
       }>;
 
-      const filtered = data.book
-        ? all.filter((r) => r.book === data.book)
-        : all;
+      const filtered = data.book ? all.filter((r) => r.book === data.book) : all;
 
       return {
         results: filtered.slice(0, data.limit),
