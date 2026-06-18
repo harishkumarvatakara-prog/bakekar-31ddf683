@@ -97,14 +97,14 @@ function RecipesPage() {
   return (
     <div className="mx-auto w-full max-w-6xl">
       <header className="mb-8">
-        <h1 className="text-3xl md:text-4xl">Recipes</h1>
+        <h1 className="text-3xl md:text-4xl font-display tracking-tight">Recipes</h1>
         <p className="mt-2 text-muted-foreground max-w-2xl">
           Browse your formula library by book, then jump straight to a letter.
         </p>
       </header>
 
       {/* Smart Recipe Finder */}
-      <section className="mb-10 rounded-2xl border border-border bg-card/60 p-6 md:p-8">
+      <section className="mb-10 rounded-2xl border border-border/70 bg-card finder-glow p-6 md:p-8">
         <div className="mb-4 flex items-center gap-2">
           <Sparkles className="h-5 w-5 text-primary" />
           <h2 className="text-xl font-display">Smart Recipe Finder</h2>
@@ -342,25 +342,25 @@ function RecipeCardView({
   return (
     <button
       onClick={onOpen}
-      className="text-left rounded-xl border border-border bg-card p-5 transition-all hover:border-primary/40 hover:shadow-md group"
+      className="text-left rounded-2xl border border-border bg-card p-6 transition-all duration-300 hover:border-primary/30 hover:card-hover group"
     >
       {recipe.book ? (
-        <div className="mb-2 text-[11px] uppercase tracking-wider text-muted-foreground">
+        <div className="mb-3 text-[11px] uppercase tracking-widest text-muted-foreground font-medium">
           {recipe.book}
         </div>
       ) : null}
-      <h3 className="font-display text-lg leading-tight text-foreground group-hover:text-primary transition-colors line-clamp-2">
+      <h3 className="font-display text-lg leading-snug text-foreground group-hover:text-primary transition-colors line-clamp-2">
         {recipe.name}
       </h3>
-      <div className="mt-4 flex flex-wrap gap-3 text-xs text-muted-foreground">
+      <div className="mt-5 flex flex-wrap gap-4 text-xs text-muted-foreground">
         {recipe.prep_time ? (
-          <span className="inline-flex items-center gap-1">
+          <span className="inline-flex items-center gap-1.5">
             <Timer className="h-3.5 w-3.5" />
             Prep: {recipe.prep_time}
           </span>
         ) : null}
         {recipe.total_time ? (
-          <span className="inline-flex items-center gap-1">
+          <span className="inline-flex items-center gap-1.5">
             <Clock className="h-3.5 w-3.5" />
             Total: {recipe.total_time}
           </span>

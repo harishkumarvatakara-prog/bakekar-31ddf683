@@ -82,3 +82,12 @@
     letter-spacing: -0.02em;
   }
 }
+
+@utility finder-glow {
+  box-shadow: 0 2px 28px -6px oklch(0.3 0.03 40 / 0.07);
+}
+
+@utility card-hover {
+  box-shadow: 0 12px 40px -10px oklch(0.3 0.03 40 / 0.14);
+  transform: translateY(-2px);
+}
