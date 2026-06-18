@@ -103,6 +103,104 @@ function RecipesPage() {
         </p>
       </header>
 
+      {/* Smart Recipe Finder */}
+      <section className="mb-10 rounded-2xl border border-border bg-card/60 p-6 md:p-8">
+        <div className="mb-4 flex items-center gap-2">
+          <Sparkles className="h-5 w-5 text-primary" />
+          <h2 className="text-xl font-display">Smart Recipe Finder</h2>
+        </div>
+        <p className="mb-4 text-sm text-muted-foreground max-w-2xl">
+          Describe what you're craving in plain English and Bakekar will find a
+          match across your collection.
+        </p>
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <input
+              type="text"
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  runSearch();
+                }
+              }}
+              placeholder="e.g., Show me a soft eggless vanilla sponge cake that takes under an hour"
+              className="w-full rounded-md border border-input bg-background pl-9 pr-3 py-3 text-sm outline-none focus:ring-2 focus:ring-ring/40"
+            />
+          </div>
+          <button
+            type="button"
+            onClick={runSearch}
+            disabled={searchMutation.isPending || !searchText.trim()}
+            className="rounded-md bg-primary px-6 py-3 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:opacity-50"
+          >
+            {searchMutation.isPending ? "Searching…" : "Search Recipes"}
+          </button>
+        </div>
+
+        {/* Search results */}
+        {(searchMutation.data?.error || searchMutation.error) && (
+          <p className="mt-4 text-sm text-destructive">
+            {searchMutation.data?.error ??
+              (searchMutation.error as Error).message}
+          </p>
+        )}
+        {searchMutation.data?.results &&
+          searchMutation.data.results.length > 0 && (
+            <div className="mt-6">
+              <div className="mb-3 text-xs uppercase tracking-wider text-muted-foreground">
+                Top {searchMutation.data.results.length} matches
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {searchMutation.data.results.map((r) => (
+                  <button
+                    key={r.id}
+                    onClick={() => setOpenId(r.id)}
+                    className="text-left rounded-xl border border-primary/30 bg-background p-5 transition-all hover:border-primary hover:shadow-md group"
+                  >
+                    <div className="mb-2 flex items-center justify-between gap-2">
+                      {r.book ? (
+                        <div className="text-[11px] uppercase tracking-wider text-muted-foreground line-clamp-1">
+                          {r.book}
+                        </div>
+                      ) : <span />}
+                      <span className="text-[10px] font-semibold text-primary">
+                        {Math.round(r.similarity * 100)}% match
+                      </span>
+                    </div>
+                    <h3 className="font-display text-base leading-tight text-foreground group-hover:text-primary transition-colors line-clamp-2">
+                      {r.name}
+                    </h3>
+                    <div className="mt-3 flex flex-wrap gap-3 text-xs text-muted-foreground">
+                      {r.prep_time ? (
+                        <span className="inline-flex items-center gap-1">
+                          <Timer className="h-3.5 w-3.5" />
+                          {r.prep_time}
+                        </span>
+                      ) : null}
+                      {r.total_time ? (
+                        <span className="inline-flex items-center gap-1">
+                          <Clock className="h-3.5 w-3.5" />
+                          {r.total_time}
+                        </span>
+                      ) : null}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        {searchMutation.data &&
+          !searchMutation.data.error &&
+          searchMutation.data.results.length === 0 && (
+            <p className="mt-4 text-sm text-muted-foreground">
+              No matches found. Try rephrasing your craving.
+            </p>
+          )}
+      </section>
+
       {/* Book dropdown */}
       <div className="mb-5 flex flex-col sm:flex-row sm:items-center gap-3">
         <label className="text-sm font-medium text-muted-foreground inline-flex items-center gap-2">
@@ -214,103 +312,6 @@ function RecipesPage() {
         </div>
       )}
 
-      {/* Smart Recipe Finder */}
-      <section className="mt-16 rounded-2xl border border-border bg-card/60 p-6 md:p-8">
-        <div className="mb-4 flex items-center gap-2">
-          <Sparkles className="h-5 w-5 text-primary" />
-          <h2 className="text-xl font-display">Smart Recipe Finder</h2>
-        </div>
-        <p className="mb-4 text-sm text-muted-foreground max-w-2xl">
-          Describe what you're craving in plain English and Bakekar will find a
-          match across your collection.
-        </p>
-        <div className="flex flex-col sm:flex-row gap-3">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <input
-              type="text"
-              value={searchText}
-              onChange={(e) => setSearchText(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  runSearch();
-                }
-              }}
-              placeholder="e.g., Show me a soft eggless vanilla sponge cake that takes under an hour"
-              className="w-full rounded-md border border-input bg-background pl-9 pr-3 py-3 text-sm outline-none focus:ring-2 focus:ring-ring/40"
-            />
-          </div>
-          <button
-            type="button"
-            onClick={runSearch}
-            disabled={searchMutation.isPending || !searchText.trim()}
-            className="rounded-md bg-primary px-6 py-3 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:opacity-50"
-          >
-            {searchMutation.isPending ? "Searching…" : "Search Recipes"}
-          </button>
-        </div>
-
-        {/* Search results */}
-        {(searchMutation.data?.error || searchMutation.error) && (
-          <p className="mt-4 text-sm text-destructive">
-            {searchMutation.data?.error ??
-              (searchMutation.error as Error).message}
-          </p>
-        )}
-        {searchMutation.data?.results &&
-          searchMutation.data.results.length > 0 && (
-            <div className="mt-6">
-              <div className="mb-3 text-xs uppercase tracking-wider text-muted-foreground">
-                Top {searchMutation.data.results.length} matches
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {searchMutation.data.results.map((r) => (
-                  <button
-                    key={r.id}
-                    onClick={() => setOpenId(r.id)}
-                    className="text-left rounded-xl border border-primary/30 bg-background p-5 transition-all hover:border-primary hover:shadow-md group"
-                  >
-                    <div className="mb-2 flex items-center justify-between gap-2">
-                      {r.book ? (
-                        <div className="text-[11px] uppercase tracking-wider text-muted-foreground line-clamp-1">
-                          {r.book}
-                        </div>
-                      ) : <span />}
-                      <span className="text-[10px] font-semibold text-primary">
-                        {Math.round(r.similarity * 100)}% match
-                      </span>
-                    </div>
-                    <h3 className="font-display text-base leading-tight text-foreground group-hover:text-primary transition-colors line-clamp-2">
-                      {r.name}
-                    </h3>
-                    <div className="mt-3 flex flex-wrap gap-3 text-xs text-muted-foreground">
-                      {r.prep_time ? (
-                        <span className="inline-flex items-center gap-1">
-                          <Timer className="h-3.5 w-3.5" />
-                          {r.prep_time}
-                        </span>
-                      ) : null}
-                      {r.total_time ? (
-                        <span className="inline-flex items-center gap-1">
-                          <Clock className="h-3.5 w-3.5" />
-                          {r.total_time}
-                        </span>
-                      ) : null}
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-        {searchMutation.data &&
-          !searchMutation.data.error &&
-          searchMutation.data.results.length === 0 && (
-            <p className="mt-4 text-sm text-muted-foreground">
-              No matches found. Try rephrasing your craving.
-            </p>
-          )}
-      </section>
 
       {/* Detail Modal */}
       <Dialog
