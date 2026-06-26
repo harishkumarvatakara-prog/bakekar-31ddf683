@@ -35,11 +35,18 @@ function formatSupabaseError(error: {
 export const listBooks = async (): Promise<BooksResult> => {
   const { createClient } = await import("@supabase/supabase-js");
   
-  // Directly initialize using Lovable's standard browser-accessible runtime variables
-  const supabaseUrl = (window as any).env?.VITE_SUPABASE_URL || (import.meta as any).env?.VITE_SUPABASE_URL;
-  const supabaseKey = (window as any).env?.VITE_SUPABASE_ANON_KEY || (import.meta as any).env?.VITE_SUPABASE_ANON_KEY;
+  // Read variables exactly how recipes.server.ts accesses them
+  const supabaseUrl = process.env.EXTERNAL_SUPABASE_URL?.trim();
+  const supabaseKey = process.env.EXTERNAL_SUPABASE_ANON_KEY?.trim();
   
-  const supabase = createClient(supabaseUrl, supabaseKey);
+  if (!supabaseUrl || !supabaseKey) {
+    console.error("Supabase environment variables are missing in this context.");
+    return { books: [] };
+  }
+
+  // Strip trailing slashes or /rest/v1 appends if present
+  const url = supabaseUrl.replace(/\/+$/, "").replace(/\/rest\/v1$/, "");
+  const supabase = createClient(url, supabaseKey, { auth: { persistSession: false } });
 
   const { data, error } = await supabase
     .rpc("get_distinct_books");
