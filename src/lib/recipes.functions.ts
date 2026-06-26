@@ -32,27 +32,29 @@ function formatSupabaseError(error: {
   return parts.join(" — ");
 }
 
-export const listBooks = createServerFn({ method: "GET" }).handler(
-  async (): Promise<BooksResult> => {
-    const { getRecipesClient } = await import("./recipes.server");
-    const supabase = getRecipesClient();
-    
-    const { data, error } = await supabase
-      .rpc("get_distinct_books");
+export const listBooks = async (): Promise<BooksResult> => {
+  const { createClient } = await import("@supabase/supabase-js");
+  
+  // Directly initialize using Lovable's standard browser-accessible runtime variables
+  const supabaseUrl = (window as any).env?.VITE_SUPABASE_URL || (import.meta as any).env?.VITE_SUPABASE_URL;
+  const supabaseKey = (window as any).env?.VITE_SUPABASE_ANON_KEY || (import.meta as any).env?.VITE_SUPABASE_ANON_KEY;
+  
+  const supabase = createClient(supabaseUrl, supabaseKey);
 
-    if (error) {
-      console.error("Error fetching books:", error);
-      return { books: [] };
-    }
+  const { data, error } = await supabase
+    .rpc("get_distinct_books");
 
-    const books = (data ?? []).map(
-      (row: { book_name: string; recipe_count: number }) => row.book_name
-    );
-
-    return { books };
+  if (error) {
+    console.error("Error fetching books:", error);
+    return { books: [] };
   }
-);
 
+  const books = (data ?? []).map(
+    (row: { book_name: string; recipe_count: number }) => row.book_name
+  );
+
+  return { books };
+};
 export const listRecipes = createServerFn({ method: "POST" })
   .inputValidator(
     (input: {
