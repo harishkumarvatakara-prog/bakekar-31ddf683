@@ -32,36 +32,27 @@ function formatSupabaseError(error: {
   return parts.join(" — ");
 }
 
-export const listBooks = async (): Promise<BooksResult> => {
-  const { createClient } = await import("@supabase/supabase-js");
-  
-  // Read variables exactly how recipes.server.ts accesses them
-  const supabaseUrl = process.env.EXTERNAL_SUPABASE_URL?.trim();
-  const supabaseKey = process.env.EXTERNAL_SUPABASE_ANON_KEY?.trim();
-  
-  if (!supabaseUrl || !supabaseKey) {
-    console.error("Supabase environment variables are missing in this context.");
-    return { books: [] };
+export const listBooks = createServerFn({ method: "GET" }).handler(
+  async () => {
+    // Dynamically import the server client to prevent Lovable browser env crashes
+    const { getRecipesClient } = await import("./recipes.server");
+    const supabase = getRecipesClient();
+
+    const { data, error } = await supabase
+      .rpc("get_distinct_books");
+
+    if (error) {
+      console.error("Error fetching books:", error);
+      return { books: [] };
+    }
+
+    const books = (data ?? []).map(
+      (row: { book_name: string; recipe_count: number }) => row.book_name
+    );
+
+    return { books };
   }
-
-  // Strip trailing slashes or /rest/v1 appends if present
-  const url = supabaseUrl.replace(/\/+$/, "").replace(/\/rest\/v1$/, "");
-  const supabase = createClient(url, supabaseKey, { auth: { persistSession: false } });
-
-  const { data, error } = await supabase
-    .rpc("get_distinct_books");
-
-  if (error) {
-    console.error("Error fetching books:", error);
-    return { books: [] };
-  }
-
-  const books = (data ?? []).map(
-    (row: { book_name: string; recipe_count: number }) => row.book_name
-  );
-
-  return { books };
-};
+);
 export const listRecipes = createServerFn({ method: "POST" })
   .inputValidator(
     (input: {
