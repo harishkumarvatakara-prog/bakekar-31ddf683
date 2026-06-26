@@ -36,25 +36,21 @@ export const listBooks = createServerFn({ method: "GET" }).handler(
   async (): Promise<BooksResult> => {
     const { getRecipesClient } = await import("./recipes.server");
     const supabase = getRecipesClient();
-    const { data, error, status, statusText } = await supabase
-      .from("recipes")
-      .select("book")
-      .not("book", "is", null);
+    
+    const { data, error } = await supabase
+      .rpc("get_distinct_books");
+
     if (error) {
-      const message = formatSupabaseError(error, status, statusText);
-      console.error("recipes.listBooks Supabase error", message);
-      return { books: [], error: message };
+      console.error("Error fetching books:", error);
+      return { books: [] };
     }
-    const rows = (data ?? []) as Array<{ book: string | null }>;
-    const unique = Array.from(
-      new Set(
-        rows
-          .map((r) => r.book)
-          .filter((b): b is string => !!b && b.trim().length > 0),
-      ),
-    ).sort((a, b) => a.localeCompare(b));
-    return { books: unique, error: null };
-  },
+
+    const books = (data ?? []).map(
+      (row: { book_name: string; recipe_count: number }) => row.book_name
+    );
+
+    return { books };
+  }
 );
 
 export const listRecipes = createServerFn({ method: "POST" })
