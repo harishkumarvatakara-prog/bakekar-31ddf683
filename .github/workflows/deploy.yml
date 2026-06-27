@@ -34,6 +34,8 @@ jobs:
 
       - name: Build project
         run: bun run build
+      - name: Copy CNAME to output
+        run: cp CNAME dist/ || true
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
