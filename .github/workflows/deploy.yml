@@ -33,7 +33,7 @@ jobs:
         run: bun install
 
       - name: Build project
-        run: bun run build
+        run: bun run build --preset=github-pages
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
