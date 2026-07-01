@@ -93,6 +93,13 @@ function RecipesPage() {
   const total = recipesQuery.data?.total ?? 0;
   const hasMore = recipes.length < total;
 
+  const { query: globalQuery } = useGlobalSearch();
+  const visibleRecipes = useMemo(() => {
+    const q = globalQuery.trim().toLowerCase();
+    if (!q) return recipes;
+    return recipes.filter((r) => r.name.toLowerCase().includes(q));
+  }, [recipes, globalQuery]);
+
   const resetPaging = () => setPages(1);
 
   return (
