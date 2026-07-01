@@ -11,6 +11,7 @@ import {
   Bell,
 } from "lucide-react";
 import type { ReactNode } from "react";
+import { useGlobalSearch } from "@/hooks/use-global-search";
 
 type NavItem = {
   to: string;
