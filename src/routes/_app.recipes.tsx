@@ -3,6 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { Search, Sparkles, Clock, Timer, BookOpen } from "lucide-react";
+import { useGlobalSearch } from "@/hooks/use-global-search";
 
 import {
   listBooks,
@@ -91,6 +92,13 @@ function RecipesPage() {
   const recipes = recipesQuery.data?.recipes ?? [];
   const total = recipesQuery.data?.total ?? 0;
   const hasMore = recipes.length < total;
+
+  const { query: globalQuery } = useGlobalSearch();
+  const visibleRecipes = useMemo(() => {
+    const q = globalQuery.trim().toLowerCase();
+    if (!q) return recipes;
+    return recipes.filter((r) => r.name.toLowerCase().includes(q));
+  }, [recipes, globalQuery]);
 
   const resetPaging = () => setPages(1);
 
@@ -276,7 +284,9 @@ function RecipesPage() {
         <div>
           {recipesQuery.isLoading
             ? "Loading recipes…"
-            : `${recipes.length} of ${total} ${total === 1 ? "recipe" : "recipes"}`}
+            : globalQuery.trim()
+              ? `${visibleRecipes.length} visible (${recipes.length} loaded, ${total} total) ${total === 1 ? "recipe" : "recipes"}`
+              : `${recipes.length} of ${total} ${total === 1 ? "recipe" : "recipes"}`}
         </div>
         {recipesQuery.error || recipesQuery.data?.error ? (
           <span className="text-destructive">
@@ -286,15 +296,17 @@ function RecipesPage() {
       </div>
 
       {/* Grid */}
-      {recipes.length === 0 && !recipesQuery.isLoading ? (
+      {visibleRecipes.length === 0 && !recipesQuery.isLoading ? (
         <div className="rounded-2xl border border-dashed border-border bg-card/50 p-16 text-center">
           <p className="text-sm text-muted-foreground">
-            No recipes match these filters. Try another book or letter.
+            {globalQuery.trim()
+              ? "No recipes match your search. Try a different keyword."
+              : "No recipes match these filters. Try another book or letter."}
           </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {recipes.map((r) => (
+          {visibleRecipes.map((r) => (
             <RecipeCardView key={r.id} recipe={r} onOpen={() => setOpenId(r.id)} />
           ))}
         </div>

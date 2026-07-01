@@ -38,20 +38,22 @@ export const listBooks = createServerFn({ method: "GET" }).handler(
     const { getRecipesClient } = await import("./recipes.server");
     const supabase = getRecipesClient();
 
-    const { data, error } = await supabase
-      .rpc("get_distinct_books");
-
-    if (error) {
-      console.error("Error fetching books:", error);
-      return { books: [] };
-    }
-
-    const books = (data ?? []).map(
-      (row: { book_name: string; recipe_count: number }) => row.book_name
+    const { data, error, status, statusText } = await supabase.rpc(
+      "get_distinct_books",
     );
 
-    return { books };
-  }
+    if (error) {
+      const message = formatSupabaseError(error, status, statusText);
+      console.error("Error fetching books:", error);
+      return { books: [], error: message } as BooksResult;
+    }
+
+    const books = (
+      (data ?? []) as Array<{ book_name: string; recipe_count: number }>
+    ).map((row) => row.book_name);
+
+    return { books, error: null } as BooksResult;
+  },
 );
 export const listRecipes = createServerFn({ method: "POST" })
   .inputValidator(
