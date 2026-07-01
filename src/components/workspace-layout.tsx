@@ -31,6 +31,7 @@ const navItems: NavItem[] = [
 ];
 
 export function WorkspaceLayout() {
+  const { query, setQuery } = useGlobalSearch();
   return (
     <div className="flex min-h-screen bg-background text-foreground">
       <aside className="hidden md:flex w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground">
