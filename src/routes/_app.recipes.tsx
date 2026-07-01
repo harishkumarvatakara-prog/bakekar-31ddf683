@@ -3,6 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { Search, Sparkles, Clock, Timer, BookOpen } from "lucide-react";
+import { useGlobalSearch } from "@/hooks/use-global-search";
 
 import {
   listBooks,
