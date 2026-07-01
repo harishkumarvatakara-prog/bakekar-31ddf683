@@ -284,7 +284,9 @@ function RecipesPage() {
         <div>
           {recipesQuery.isLoading
             ? "Loading recipes…"
-            : `${recipes.length} of ${total} ${total === 1 ? "recipe" : "recipes"}`}
+            : globalQuery.trim()
+              ? `${visibleRecipes.length} visible (${recipes.length} loaded, ${total} total) ${total === 1 ? "recipe" : "recipes"}`
+              : `${recipes.length} of ${total} ${total === 1 ? "recipe" : "recipes"}`}
         </div>
         {recipesQuery.error || recipesQuery.data?.error ? (
           <span className="text-destructive">
@@ -294,15 +296,17 @@ function RecipesPage() {
       </div>
 
       {/* Grid */}
-      {recipes.length === 0 && !recipesQuery.isLoading ? (
+      {visibleRecipes.length === 0 && !recipesQuery.isLoading ? (
         <div className="rounded-2xl border border-dashed border-border bg-card/50 p-16 text-center">
           <p className="text-sm text-muted-foreground">
-            No recipes match these filters. Try another book or letter.
+            {globalQuery.trim()
+              ? "No recipes match your search. Try a different keyword."
+              : "No recipes match these filters. Try another book or letter."}
           </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {recipes.map((r) => (
+          {visibleRecipes.map((r) => (
             <RecipeCardView key={r.id} recipe={r} onOpen={() => setOpenId(r.id)} />
           ))}
         </div>
